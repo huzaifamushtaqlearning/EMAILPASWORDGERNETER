@@ -1,80 +1,79 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 function App() {
-  const [length, setLength] = useState(4); // Default password length
+  const [length, setLength] = useState(8);
   const [numberAllowed, setNumberAllowed] = useState(false);
   const [characterAllowed, setCharacterAllowed] = useState(false);
-  const [simplePassword, setSimplePassword] = useState(false);
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
 
-  // Password Generator
- const passwordGenerator = useCallback(() => {
-  let pass = '';
-  const letters = 'abcdefghijklmnopqrstuvwxyz';
+const passwordRef = useRef(null);
 
-  if (simplePassword) {
-    // Sequential letters like abcd, mnop
-    const startIndex = Math.floor(Math.random() * (letters.length - length));
-    pass = letters.slice(startIndex, startIndex + length);
-  } else {
+const copyPasswordToClipBoard = useCallback(() => {
+  if (passwordRef.current) {
+    passwordRef.current.select();
+    passwordRef.current.setSelectionRange(0,999)
+    window.navigator.clipboard.writeText(password);
+  }
+}, [password]);
+
+  const passwordGenerator = useCallback(() => {
+    let pass = '';
     let str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
     if (numberAllowed) str += '0123456789';
     if (characterAllowed) str += '!@#$%^&*(){}[]';
 
-    for (let i = 0; i < length; i++) {
+    for (let i = 1; i <= length; i++) {
       const char = Math.floor(Math.random() * str.length);
       pass += str.charAt(char);
     }
-  }
 
-  setPassword(pass);
-}, [length, numberAllowed, characterAllowed, simplePassword]);
-
+    setPassword(pass);
+  }, [length, numberAllowed, characterAllowed]);
 
   useEffect(() => {
     passwordGenerator();
-  }, [length, numberAllowed, characterAllowed, simplePassword, passwordGenerator]);
-
-  // Email Generator
-  const generateRandomEmail = () => {
-    const usernames = ['ali', 'devx', 'reactking', 'codepro', 'jsninja'];
-    const domains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
-
-    const randomName = usernames[Math.floor(Math.random() * usernames.length)];
-    const randomNum = Math.floor(Math.random() * 1000);
-    const randomDomain = domains[Math.floor(Math.random() * domains.length)];
-
-    const generatedEmail = `${randomName}${randomNum}@${randomDomain}`;
-    setEmail(generatedEmail);
-  };
+  }, [length, numberAllowed, characterAllowed, passwordGenerator]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white shadow-2xl rounded-2xl p-6 max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="bg-white shadow-xl rounded-2xl p-6 max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Password Generator */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">🔐 Password Generator</h2>
-
+        {/* Left side: password display */}
+        <div className="flex flex-col justify-center">
+          <h1 className="text-3xl font-bold mb-4 text-gray-800">🔐 Your Generated Password</h1>
           <input
             type="text"
             readOnly
             value={password}
-            className="w-full p-3 border border-gray-300 rounded mb-4 text-lg"
+            ref={passwordRef}
+            className="text-lg p-3 border border-gray-300 rounded-lg w-full mb-4"
           />
+        </div>
+
+        {/* Right side: controls */}
+        
+        <div className="bg-gray-50 p-5 rounded-xl shadow-inner">
+           <button
+            onClick={copyPasswordToClipBoard}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+          >
+            copy
+          </button>
+          <h2 className="text-xl font-semibold mb-4 text-gray-700">Customize Settings</h2>
 
           <div className="mb-4">
             <label className="block text-sm mb-1 text-gray-600">Password Length: {length}</label>
             <input
               type="range"
               min="4"
-              max="20"
+              max="100"
               value={length}
-              onChange={(e) => setLength(Number(e.target.value))}
+              onChange={(e) => setLength(e.target.value)}
               className="w-full"
             />
           </div>
+          
 
           <div className="mb-4 space-y-2">
             <label className="flex items-center space-x-2 text-gray-700">
@@ -82,7 +81,6 @@ function App() {
                 type="checkbox"
                 checked={numberAllowed}
                 onChange={() => setNumberAllowed(!numberAllowed)}
-                disabled={simplePassword}
               />
               <span>Include Numbers</span>
             </label>
@@ -92,49 +90,18 @@ function App() {
                 type="checkbox"
                 checked={characterAllowed}
                 onChange={() => setCharacterAllowed(!characterAllowed)}
-                disabled={simplePassword}
               />
               <span>Include Symbols</span>
-            </label>
-
-            <label className="flex items-center space-x-2 text-blue-700 font-medium">
-              <input
-                type="checkbox"
-                checked={simplePassword}
-                onChange={() => setSimplePassword(!simplePassword)}
-              />
-              <span>Use Simple Password (A–Z only)</span>
             </label>
           </div>
 
           <button
             onClick={passwordGenerator}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition duration-200"
           >
             Generate Password
           </button>
         </div>
-
-        {/* Email Generator */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-gray-800">📧 Email Generator</h2>
-
-          <input
-            type="text"
-            readOnly
-            value={email}
-            placeholder="Click Generate"
-            className="w-full p-3 border border-gray-300 rounded mb-4 text-lg"
-          />
-
-          <button
-            onClick={generateRandomEmail}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-lg"
-          >
-            Generate Email
-          </button>
-        </div>
-
       </div>
     </div>
   );
